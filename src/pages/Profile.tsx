@@ -124,9 +124,9 @@ const Profile: React.FC = () => {
 					<p>Loading...</p>
 				)}
 			</div>
-			<Button onClick={handleLogout} variant="destructive">
+			{token && <Button onClick={handleLogout} variant="destructive">
 				Logout
-			</Button>
+			</Button>}
 		</div>
 	);
 };
