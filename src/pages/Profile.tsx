@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, ChangeEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
@@ -18,8 +18,8 @@ const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 const Profile: React.FC = () => {
 	const navigate = useNavigate();
 	const { token, setToken } = useAuth();
-	const [userData, setUserData] = useState<User>();
-	const [tempUserData, setTempUserData] = useState<User>();
+	const [userData, setUserData] = useState<User | null>(null);
+	const [tempUserData, setTempUserData] = useState<User | null>(null);
 	const [isUserEditing, setIsUserEditing] = useState(false);
 
 	const handleLogout = useCallback(() => {
@@ -48,36 +48,55 @@ const Profile: React.FC = () => {
 	const handleUserEditClick = async () => {
 		if (isUserEditing) {
 			try {
-				await axios.put(`${BACKEND_URL}/user/profile`, tempUserData, {
-					headers: { Authorization: `Bearer ${token}` },
-				});
-				setUserData(tempUserData);
+				if (tempUserData) {
+					await axios.put(`${BACKEND_URL}/user/profile`, tempUserData, {
+						headers: { Authorization: `Bearer ${token}` },
+					});
+					setUserData(tempUserData);
+				}
 			} catch (error) {
 				console.error("Error updating user data:", error);
 			}
-		} else {
-			setTempUserData(userData);
 		}
 		setIsUserEditing(!isUserEditing);
 	};
 
-	const handleUserDataChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+	const handleUserDataChange = (e: ChangeEvent<HTMLInputElement>) => {
 		const { id, value } = e.target;
 		setTempUserData(
 			(prevData) =>
-				({
-					...prevData,
-					[id]: value || "",
-				} as User)
+				(prevData
+					? {
+							...prevData,
+							[id]: value || "",
+					  }
+					: null) as User
 		);
 	};
 
 	const userFields = [
-		{ label: "Full Name", id: "fullName", type: "text", value: tempUserData?.fullName },
-		{ label: "Username", id: "username", type: "text", value: tempUserData?.username },
-		{ label: "Email", id: "email", type: "email", value: tempUserData?.email },
-		{ label: "Phone Number", id: "phoneNumber", type: "text", value: tempUserData?.phoneNumber },
+		{ label: "Full Name", id: "fullName", type: "text", value: tempUserData?.fullName || "" },
+		{ label: "Username", id: "username", type: "text", value: tempUserData?.username || "" },
+		{ label: "Email", id: "email", type: "email", value: tempUserData?.email || "" },
+		{ label: "Phone Number", id: "phoneNumber", type: "text", value: tempUserData?.phoneNumber || "" },
 	];
+
+	const renderUserFields = () => {
+		return userFields.map((field) => (
+			<div key={field.id}>
+				<Label htmlFor={field.id}>{field.label}</Label>
+				<Input
+					className={`max-w-96 ${isUserEditing ? "bg-white" : ""}`}
+					type={field.type}
+					id={field.id}
+					placeholder={field.label}
+					value={field.value}
+					disabled={field.id === "email" ? true : !isUserEditing}
+					onChange={handleUserDataChange}
+				/>
+			</div>
+		));
+	};
 
 	return (
 		<div className="w-screen flex items-center flex-col justify-between h-screen py-16 bg-zinc-50">
@@ -102,31 +121,18 @@ const Profile: React.FC = () => {
 									<div>{isUserEditing ? "Save" : "Edit"}</div> {isUserEditing ? <Save className="h-4 w-4" /> : <FilePenLine className="h-4 w-4" />}
 								</Button>
 							</div>
-							<div className="grid grid-cols-2 gap-4">
-								{userFields.map((field) => (
-									<div key={field.id}>
-										<Label htmlFor={field.id}>{field.label}</Label>
-										<Input
-											className={`max-w-96 ${isUserEditing ? "bg-white" : ""}`}
-											type={field.type}
-											id={field.id}
-											placeholder={field.label}
-											value={field.value || ""}
-											disabled={field.id == "email" ? true : !isUserEditing}
-											onChange={handleUserDataChange}
-										/>
-									</div>
-								))}
-							</div>
+							<div className="grid grid-cols-2 gap-4">{renderUserFields()}</div>
 						</CardContent>
 					</Card>
 				) : (
 					<p>Loading...</p>
 				)}
 			</div>
-			{token && <Button onClick={handleLogout} variant="destructive">
-				Logout
-			</Button>}
+			{token && (
+				<Button onClick={handleLogout} variant="destructive">
+					Logout
+				</Button>
+			)}
 		</div>
 	);
 };

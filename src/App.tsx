@@ -6,6 +6,7 @@ import Login from "@/pages/Login";
 import Home from "@/pages/Home";
 import useAuth from "@/hooks/useAuth";
 import Profile from "@/pages/Profile";
+import ProtectedLayout from "@/layouts/ProtectedLayout";
 
 const App: React.FC = () => {
 	const { token } = useAuth();
@@ -17,7 +18,9 @@ const App: React.FC = () => {
 				<Route path="/register" element={<Register />} />
 				<Route path="/login" element={token ? <Navigate to="/home" /> : <Login />} />
 				<Route path="/home" element={<Home />} />
-				<Route path="/profile" element={<Profile />} />
+				<Route element={<ProtectedLayout />}>
+					<Route path="/profile" element={<Profile />} />
+				</Route>
 			</Routes>
 			<Toaster />
 		</Router>
