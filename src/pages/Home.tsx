@@ -40,10 +40,14 @@ const Home: React.FC = () => {
 					<span className="text-cyan-700">Home</span> / <button onClick={() => navigate("/profile")}>Profile</button>
 				</h1>
 				{token ? (
-					<div className="flex flex-col items-center gap-2">
-						{email && <p>Welcome, {email}.</p>}
-						<p>This is your dashboard after logging in successfully.</p>
-					</div>
+					email ? (
+						<div className="flex flex-col items-center gap-2">
+							<p>Welcome, {email}.</p>
+							<p>This is your dashboard after logging in successfully.</p>
+						</div>
+					) : (
+						<p>Loading...</p>
+					)
 				) : (
 					<p>
 						Please{" "}
